@@ -5,7 +5,18 @@
 
 using namespace std;
 
-void dibujarCirculo(int radio) // graficar circulo
+const int SCREEN_HEIGHT = 200; // Altura predeterminada de la pantalla
+const int SCREEN_WIDTH = 200;  // Ancho predeterminado de la pantalla
+
+void gotoxy(int x, int y) // Modificado para mover el cursor sin imprimir nada
+{
+    COORD coord;
+    coord.X = x;
+    coord.Y = y;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+
+void dibujarCirculo(int radio, int startX, int startY) // graficar circulo
 {
     int centro = radio;
     for(int a = 0; a <= 2 * radio; a++)
@@ -15,18 +26,16 @@ void dibujarCirculo(int radio) // graficar circulo
             double distancia = sqrt((a - radio) * (a - radio) + (e - radio) * (e - radio));
             if (distancia <= radio + 0.5)
             {
+                int posX = (startX + e) % SCREEN_WIDTH;
+                int posY = (startY + a) % SCREEN_HEIGHT;
+                gotoxy(posX, posY);
                 cout << "*";
             }
-            else
-            {
-                cout << " ";
-            }
         }
-        cout << endl;
     }
 }
 
-void dibujarCuadrado(int lado) // graficar cuadrado
+void dibujarCuadrado(int lado, int startX, int startY) // graficar cuadrado
 {
     for (int a = 0; a < lado; ++a)
     {
@@ -34,18 +43,16 @@ void dibujarCuadrado(int lado) // graficar cuadrado
         {
             if (a == 0 || a == lado - 1 || e == 0 || e == lado - 1)
             {
+                int posX = (startX + e * 2) % SCREEN_WIDTH;
+                int posY = (startY + a) % SCREEN_HEIGHT;
+                gotoxy(posX, posY);
                 cout << "* ";
             }
-            else
-            {
-                cout << "  ";
-            }
         }
-        cout << endl;
     }
 }
 
-void dibujarRectangulo(int altura, int ancho) // graficar rectangulo
+void dibujarRectangulo(int altura, int ancho, int startX, int startY) // graficar rectangulo
 {
     for (int a = 0; a < altura; a++)
     {
@@ -53,18 +60,16 @@ void dibujarRectangulo(int altura, int ancho) // graficar rectangulo
         {
             if (a == 0 || a == altura - 1 || e == 0 || e == ancho - 1)
             {
+                int posX = (startX + e * 2) % SCREEN_WIDTH;
+                int posY = (startY + a) % SCREEN_HEIGHT;
+                gotoxy(posX, posY);
                 cout << "* ";
             }
-            else
-            {
-                cout << "  ";
-            }
         }
-        cout << endl;
     }
 }
 
-void dibujarTriangulo(int base) // graficar triangulo
+void dibujarTriangulo(int base, int startX, int startY) // graficar triangulo
 {
     int altura;
     if (base % 2 == 0)
@@ -78,70 +83,85 @@ void dibujarTriangulo(int base) // graficar triangulo
         {
             if (e >= altura - a + 1 && e <= altura + a - 1)
             {
+                int posX = (startX + e) % SCREEN_WIDTH;
+                int posY = (startY + a) % SCREEN_HEIGHT;
+                gotoxy(posX, posY);
                 cout << "*";
             }
-            else
-            {
-                cout << " ";
-            }
         }
-        cout << endl;
     }
-}
-
-void gotoxy(int x, int y, char cursor = ' ') // Modificado para imprimir un símbolo en la posición actual
-{
-    COORD coord;
-    coord.X = x;
-    coord.Y = y;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-    cout << cursor; // Imprime el símbolo en la posición actual
 }
 
 int main()
 {
-    int opcion, tecla, x = 0, y = 0;
-    int tamx, tamy;
-    cout<<"Ingrese el la altura de la pantalla que desea: "<<endl;
-    cin>>tamy;
-    cout<<"Ingrese el ancho de la pantalla que desea: "<<endl;
-    cin>>tamx;
+    // Moviendo el cursor al inicio del programa
+    gotoxy(0, 0);
+
+    int tecla, x = 0, y = 0;
+    int opcion, px, py;
+
     while (true)
     {
-        system("cls"); // Limpia la pantalla antes de imprimir el menú
-        gotoxy(x, y); // Muestra el cursor en la posición actual
-
+        system("cls");
+        cout << "Presione la letra 'q' para poder mostrar el menu "<<endl;
         tecla = _getch();
 
         switch (tecla)
         {
             case 72: // Arriba
-                if (y > 0) y--;
+                y = (y - 1 + SCREEN_HEIGHT) % SCREEN_HEIGHT;
+                gotoxy(x, y); // Muestra el cursor en su nueva posiciÃ³n
                 break;
             case 75: // Izquierda
-                if (x > 0) x--;
+                x = (x - 1 + SCREEN_WIDTH) % SCREEN_WIDTH;
+                gotoxy(x, y); // Muestra el cursor en su nueva posiciÃ³n
                 break;
             case 80: // Abajo
-                if (y < tamy - 1) y++;
+                y = (y + 1) % SCREEN_HEIGHT;
+                gotoxy(x, y); // Muestra el cursor en su nueva posiciÃ³n
                 break;
             case 77: // Derecha
-                if (x < tamx - 1) x++;
+                x = (x + 1) % SCREEN_WIDTH;
+                gotoxy(x, y); // Muestra el cursor en su nueva posiciÃ³n
                 break;
-            case 'q': // Salir del programa
-                return 0;
+            case 'q':
+                system("cls");
+                gotoxy(x, y);
+                py = y;
+                px = x;
+                cout << "menu de comandos " << endl;
+                py = y - 2;
+                gotoxy(x, py);
+                cout << "0. Imprime cuadrado " << endl;
+                py = y - 2;
+                gotoxy(x, py);
+                cout << "1. Imprime Triangulo " << endl;
+                py = y - 2;
+                gotoxy(x, py);
+                cout << "2. Imprime Circulo " << endl;
+                py = y - 2;
+                gotoxy(x, py);
+                cout << "3. Imprime Rectangulo " << endl;
+                py = y - 2;
+                gotoxy(x, py);
+                cout << "4. Salir " << endl;
+                px = x + 20;
+                gotoxy(px, y);
+                cin >> opcion;
+                break;
         }
 
-        if (tecla == 13) // Si se presiona Enter
+        if (tecla == 'q') // menu para graficar
         {
             system("cls"); // Limpia la pantalla antes de imprimir el dibujo
-            switch (y)
+            switch (opcion)
             {
                 case 0:
                     {
                         int lado;
                         cout << "Ingrese un lado del cuadrado: ";
                         cin >> lado;
-                        dibujarCuadrado(lado);
+                        dibujarCuadrado(lado, x, y);
                         break;
                     }
                 case 1:
@@ -149,7 +169,7 @@ int main()
                         int base;
                         cout << "Ingrese la base del triangulo que desea dibujar: ";
                         cin >> base;
-                        dibujarTriangulo(base);
+                        dibujarTriangulo(base, x, y);
                         break;
                     }
                 case 2:
@@ -157,7 +177,7 @@ int main()
                         int radio;
                         cout << "Ingrese el radio del circulo que desea dibujar: ";
                         cin >> radio;
-                        dibujarCirculo(radio);
+                        dibujarCirculo(radio, x, y);
                         break;
                     }
                 case 3:
@@ -167,7 +187,7 @@ int main()
                         cin >> ancho;
                         cout << "Ingrese la altura del rectuangulo que desea dibujar: ";
                         cin >> altura;
-                        dibujarRectangulo(altura, ancho);
+                        dibujarRectangulo(altura, ancho, x, y);
                         break;
                     }
                 case 4:
@@ -180,3 +200,4 @@ int main()
 
     return 0;
 }
+
