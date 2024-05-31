@@ -1,0 +1,396 @@
+#include <iostream>
+#include <cmath>
+#include <Windows.h>
+#include <conio.h>
+
+using namespace std;
+
+const int SCREEN_WIDTH = 100; // Ajustado para evitar el menú
+const int SCREEN_HEIGHT = 50;
+const int MENU_WIDTH = 50; // Ancho del menú
+
+void gotoxy(int x, int y)
+{
+    HANDLE consola = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD cursor;
+    cursor.X = x;
+    cursor.Y = y;
+    SetConsoleCursorPosition(consola, cursor);
+}
+
+void setConsoleSize(int ancho, int alto)
+{
+    SMALL_RECT r;
+    COORD c;
+    r.Left = r.Top = 0;
+    r.Right = ancho - 1;
+    r.Bottom = alto - 1;
+    c.X = ancho;
+    c.Y = alto;
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleScreenBufferSize(hConsole, c);
+    SetConsoleWindowInfo(hConsole, TRUE, &r);
+}
+
+void clearLine(int y)
+{
+    gotoxy(0, y);
+    cout << string(SCREEN_WIDTH, ' '); // Limpiar la línea con espacios
+    gotoxy(0, y);
+}
+
+void Menu()
+{
+    int menuX = SCREEN_WIDTH + 1; // Ajustado para evitar el área de pantalla
+    gotoxy(menuX, 0);
+    cout << "Menu:";
+    gotoxy(menuX, 1);
+    cout << "PRESIONE LA TECLA SEGUN LA OPCION QUE DESEA USAR";
+    gotoxy(menuX, 3);
+    cout << "F1. TRIANGULO";
+    gotoxy(menuX, 5);
+    cout << "F2. CUADRADO";
+    gotoxy(menuX, 7);
+    cout << "F3. RECTANGULO";
+    gotoxy(menuX, 9);
+    cout << "F4. CIRCULO";
+    gotoxy(menuX, 11);
+    cout << "F5. LINEA";
+    gotoxy(menuX, 13);
+    cout << "F6. ROMBO";
+    gotoxy(menuX, 15);
+    cout << "F7. HEXAGONO";
+    gotoxy(menuX, 17);
+    cout << "F8. NUEVO CARACTER";
+    gotoxy(menuX, 19);
+    cout << "F9. LIMPIAR PANTALLA";
+    gotoxy(menuX, 21);
+    cout << "F10. COLOR DE CARACTER";
+    gotoxy(menuX, 23);
+    cout << "F12. GRABAR PANTALLA";
+    gotoxy(menuX, 25);
+    cout << "CTRL+A. ABRIR ARCHIVOS Y MOSTRAR EN PANTALLA";
+    gotoxy(menuX, 27);
+    cout << "RECUERDA Presionar la tecla FN";
+    gotoxy(menuX, 30);
+    cout << "ESC. Salir";
+}
+
+void dibujarTriangulo(int &startX, int &startY, char cursorc)
+{
+    if (cursorc == '\0') cursorc = '*'; // Asignar '*' si no hay un carácter asignado
+
+    int base;
+    int inputY = SCREEN_HEIGHT - 1; // Posición de la línea de entrada
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Ingrese el tamaño de la base del triángulo: ";
+    cin >> base;
+    clearLine(inputY); // Limpiar la línea de entrada después de leer el valor
+    if (base > 20) base = 20;
+
+    int altura = (base / 2) + 1;
+    for (int a = 0; a < altura; a++)
+    {
+        for (int e = 0; e < base; e++)
+        {
+            if (a == altura - 1 || e == altura - a - 1 || e == altura + a - 1)
+            {
+                int x = (startX + e) % SCREEN_WIDTH;
+                int y = (startY + a) % SCREEN_HEIGHT;
+                gotoxy(x, y);
+                cout << cursorc;
+            }
+        }
+    }
+    startX = (startX + base) % SCREEN_WIDTH;
+    startY = (startY + altura) % SCREEN_HEIGHT;
+}
+
+void dibujarCuadrado(int &startX, int &startY, char cursorc)
+{
+    if (cursorc == '\0') cursorc = '*'; // Asignar '*' si no hay un carácter asignado
+
+    int lado;
+    int inputY = SCREEN_HEIGHT - 1; // Posición de la línea de entrada
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Ingrese el tamaño del lado del cuadrado: ";
+    cin >> lado;
+    clearLine(inputY); // Limpiar la línea de entrada después de leer el valor
+    if (lado > 20) lado = 20;
+
+    for (int a = 0; a < lado; ++a)
+    {
+        for (int e = 0; e < lado; ++e)
+        {
+            if (a == 0 || a == lado - 1 || e == 0 || e == lado - 1)
+            {
+                int x = (startX + e) % SCREEN_WIDTH;
+                int y = (startY + a) % SCREEN_HEIGHT;
+                gotoxy(x, y);
+                cout << cursorc;
+            }
+        }
+    }
+    startX = (startX + lado) % SCREEN_WIDTH;
+    startY = (startY + lado) % SCREEN_HEIGHT;
+}
+
+void dibujarRectangulo(int &startX, int &startY, char cursorc)
+{
+    if (cursorc == '\0') cursorc = '*'; // Asignar '*' si no hay un carácter asignado
+
+    int altura, ancho;
+    int inputY = SCREEN_HEIGHT - 1; // Posición de la línea de entrada
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Ingrese el tamaño de la altura del rectángulo: ";
+    cin >> altura;
+    clearLine(inputY); // Limpiar la línea de entrada después de leer el valor
+    cout << "Ingrese el tamaño del ancho del rectángulo: ";
+    cin >> ancho;
+    clearLine(inputY); // Limpiar la línea de entrada después de leer el valor
+    if (altura > 20) altura = 20;
+    if (ancho > 40) ancho = 40;
+
+    for (int a = 0; a < altura; a++)
+    {
+        for (int e = 0; e < ancho; e++)
+        {
+            if (a == 0 || a == altura - 1 || e == 0 || e == ancho - 1)
+            {
+                int x = (startX + e) % SCREEN_WIDTH;
+                int y = (startY + a) % SCREEN_HEIGHT;
+                gotoxy(x, y);
+                cout << cursorc;
+            }
+        }
+    }
+    startX = (startX + ancho) % SCREEN_WIDTH;
+    startY = (startY + altura) % SCREEN_HEIGHT;
+}
+
+void dibujarCirculo(int &startX, int &startY, char cursorc)
+{
+    if (cursorc == '\0') cursorc = '*'; // Asignar '*' si no hay un carácter asignado
+
+    int radio;
+    int inputY = SCREEN_HEIGHT - 1; // Posición de la línea de entrada
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Ingrese el radio del círculo: ";
+    cin >> radio;
+    clearLine(inputY); // Limpiar la línea de entrada después de leer el valor
+    if (radio > 10) radio = 10;
+
+    for (int a = 0; a <= 2 * radio; a++)
+    {
+        for (int e = 0; e <= 2 * radio; e++)
+        {
+            double distancia = sqrt((a - radio) * (a - radio) + (e - radio) * (e - radio));
+            if (abs(distancia - radio) < 0.5)
+            {
+                int x = (startX + e) % SCREEN_WIDTH;
+                int y = (startY + a) % SCREEN_HEIGHT;
+                gotoxy(x, y);
+                cout << cursorc;
+            }
+        }
+    }
+    startX = (startX + 2 * radio) % SCREEN_WIDTH;
+    startY = (startY + 2 * radio) % SCREEN_HEIGHT;
+}
+
+void dibujarLinea(int &startX, int &startY, char cursorc)
+{
+    if (cursorc == '\0') cursorc = '*'; // Asignar '*' si no hay un carácter asignado
+
+    int longitud;
+    int inputY = SCREEN_HEIGHT - 1; // Posición de la línea de entrada
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Ingrese la longitud de la línea: ";
+    cin >> longitud;
+    clearLine(inputY); // Limpiar la línea de entrada después de leer el valor
+    if (longitud > 40) longitud = 40;
+
+    for (int i = 0; i < longitud; ++i)
+    {
+        int x = (startX + i) % SCREEN_WIDTH;
+        int y = startY % SCREEN_HEIGHT;
+        gotoxy(x, y);
+        cout << cursorc;
+    }
+    startX = (startX + longitud) % SCREEN_WIDTH;
+}
+
+void dibujarRombo(int &startX, int &startY, char cursorc)
+{
+    if (cursorc == '\0') cursorc = '*'; // Asignar '*' si no hay un carácter asignado
+
+    int diagonal;
+    int inputY = SCREEN_HEIGHT - 1; // Posición de la línea de entrada
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Ingrese el tamaño de la diagonal del rombo: ";
+    cin >> diagonal;
+    clearLine(inputY); // Limpiar la línea de entrada después de leer el valor
+    if (diagonal > 20) diagonal = 20;
+
+    int altura = diagonal / 2;
+    for (int a = 0; a <= altura; a++)
+    {
+        for (int e = -a; e <= a; e++)
+        {
+            int x = (startX + e) % SCREEN_WIDTH;
+            int y = (startY + a) % SCREEN_HEIGHT;
+            gotoxy(x, y);
+            cout << cursorc;
+            y = (startY + altura + (altura - a)) % SCREEN_HEIGHT;
+            gotoxy(x, y);
+            cout << cursorc;
+        }
+    }
+    startX = (startX + diagonal) % SCREEN_WIDTH;
+    startY = (startY + altura * 2) % SCREEN_HEIGHT;
+}
+
+void dibujarHexagono(int &startX, int &startY, char cursorc)
+{
+    if (cursorc == '\0') cursorc = '*'; // Asignar '*' si no hay un carácter asignado
+
+    int lado;
+    int inputY = SCREEN_HEIGHT - 1; // Posición de la línea de entrada
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Ingrese el tamaño del lado del hexágono: ";
+    cin >> lado;
+    clearLine(inputY); // Limpiar la línea de entrada después de leer el valor
+    if (lado > 10) lado = 10;
+
+    for (int i = 0; i < lado; i++)
+    {
+        gotoxy(startX - i, startY + i);
+        cout << cursorc;
+        gotoxy(startX + lado - 1 + i, startY + i);
+        cout << cursorc;
+        gotoxy(startX - i, startY + 2 * lado - i - 1);
+        cout << cursorc;
+        gotoxy(startX + lado - 1 + i, startY + 2 * lado - i - 1);
+        cout << cursorc;
+    }
+    for (int i = 0; i < lado; i++)
+    {
+        gotoxy(startX + i, startY);
+        cout << cursorc;
+        gotoxy(startX + i, startY + 2 * lado - 1);
+        cout << cursorc;
+    }
+    startX = (startX + lado * 2) % SCREEN_WIDTH;
+    startY = (startY + lado * 2) % SCREEN_HEIGHT;
+}
+
+void nuevoCaracter(int x, int y, char &cursorc)
+{
+    int inputY = SCREEN_HEIGHT - 1; // Posición de la línea de entrada
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Ingrese el caracter a mostrar: ";
+    cin >> cursorc;
+    clearLine(inputY); // Limpiar la línea de entrada después de leer el valor
+}
+
+void limpiarPantalla()
+{
+    system("cls");
+    Menu(); // Volver a dibujar el menú después de limpiar la pantalla
+}
+
+int main()
+{
+    int x = 0, y = 0;
+    int prevX = x, prevY = y;
+    char cursorc = '*'; // Inicializar cursorc con '*'
+
+    setConsoleSize(SCREEN_WIDTH + MENU_WIDTH, SCREEN_HEIGHT); // definir el tamaño de la pantalla con espacio para el menú
+    system("cls");
+    system("color F0");
+    Menu(); // imprimir el menú
+    gotoxy(x, y);
+    cout << cursorc;
+
+    while (true)
+    {
+        if (GetAsyncKeyState(VK_LEFT) & 0x8000) // mover cursor a la izquierda
+        {
+            gotoxy(prevX, prevY);
+            cout << " "; // limpiar la posición anterior
+
+            prevX = x;
+            prevY = y;
+
+            x--;
+            if (x < 0) x = SCREEN_WIDTH - 1; // Wrap-around al borde derecho
+
+            gotoxy(x, y);
+            cout << cursorc;
+        }
+        if (GetAsyncKeyState(VK_RIGHT) & 0x8000) // mover cursor a la derecha
+        {
+            gotoxy(prevX, prevY);
+            cout << " "; // limpiar la posición anterior
+
+            prevX = x;
+            prevY = y;
+
+            x++;
+            if (x >= SCREEN_WIDTH) x = 0; // Wrap-around al borde izquierdo
+
+            gotoxy(x, y);
+            cout << cursorc;
+        }
+        if (GetAsyncKeyState(VK_DOWN) & 0x8000) // mover cursor abajo
+        {
+            gotoxy(prevX, prevY);
+            cout << " "; // limpiar la posición anterior
+
+            prevX = x;
+            prevY = y;
+
+            y++;
+            if (y >= SCREEN_HEIGHT) y = 0; // Wrap-around al borde superior
+
+            gotoxy(x, y);
+            cout << cursorc;
+        }
+        if (GetAsyncKeyState(VK_UP) & 0x8000) // mover cursor arriba
+        {
+            gotoxy(prevX, prevY);
+            cout << " "; // limpiar la posición anterior
+
+            prevX = x;
+            prevY = y;
+
+            y--;
+            if (y < 0) y = SCREEN_HEIGHT - 1; // Wrap-around al borde inferior
+
+            gotoxy(x, y);
+            cout << cursorc;
+        }
+
+        if (GetAsyncKeyState(VK_F1) & 0x8000) {dibujarTriangulo(x, y, cursorc);}
+        if (GetAsyncKeyState(VK_F2) & 0x8000) {dibujarCuadrado(x, y, cursorc);}
+        if (GetAsyncKeyState(VK_F3) & 0x8000) {dibujarRectangulo(x, y, cursorc);}
+        if (GetAsyncKeyState(VK_F4) & 0x8000) {dibujarCirculo(x, y, cursorc);}
+        if (GetAsyncKeyState(VK_F5) & 0x8000) {dibujarLinea(x, y, cursorc);}
+        if (GetAsyncKeyState(VK_F6) & 0x8000) {dibujarRombo(x, y, cursorc);}
+        if (GetAsyncKeyState(VK_F7) & 0x8000) {dibujarHexagono(x, y, cursorc);}
+        if (GetAsyncKeyState(VK_F8) & 0x8000) {nuevoCaracter(x, y, cursorc);}
+        if (GetAsyncKeyState(VK_F9) & 0x8000) limpiarPantalla();
+        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) break;
+
+        Sleep(100); // Añadir una pequeña pausa para evitar sobrecargar la CPU
+    }
+    return 0;
+}
