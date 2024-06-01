@@ -1,5 +1,3 @@
-Claro, aquí tienes un manual técnico en lenguaje Markdown basado en el código proporcionado:
-
 # Manual Técnico para Aplicación de Dibujo en Consola
 
 ## Descripción General
@@ -485,5 +483,3 @@ void dibujarHexagono(int &startX, int &startY, char cursorc, bool relleno) {
 
 6. **Limpiar pantalla y salir**:
    - Usa `F9` para limpiar la pantalla y `ESC` para salir del programa.
-
-Este manual proporciona una descripción general y detallada del funcionamiento del programa, ayudando a los desarrolladores y usuarios a entender y utilizar la aplicación de dibujo en consola de manera efectiva.
