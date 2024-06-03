@@ -1,0 +1,1006 @@
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <windows.h>
+#include <conio.h>
+#include <shlobj.h>
+#include <wchar.h>
+
+using namespace std;
+
+// Constantes para definir el tamaño de la pantalla y el menú
+const int SCREEN_WIDTH = 150;
+const int SCREEN_HEIGHT = 50;
+const int MENU_WIDTH = 50;
+
+// Handle para manipular la consola
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+char lastChar = ' '; // Carácter anterior del cursor
+
+// Función para obtener el carácter en una posición específica
+char getCharAtPosition(int x, int y)
+{
+    CHAR_INFO charInfo;
+    COORD bufferSize = {1, 1};
+    COORD bufferCoord = {0, 0};
+    SMALL_RECT readRegion = {x, y, x, y};
+
+    if (!ReadConsoleOutput(hConsole, &charInfo, bufferSize, bufferCoord, &readRegion))
+    {
+        return ' ';
+    }
+    return charInfo.Char.AsciiChar;
+}
+
+// Función para mover el cursor a una posición específica
+void gotoxy(int x, int y)
+{
+    COORD cursor;
+    cursor.X = x;
+    cursor.Y = y;
+    SetConsoleCursorPosition(hConsole, cursor);
+}
+
+// Función para escribir un carácter en una posición específica si es diferente del actual
+void writeCharAtPosition(int x, int y, char c)
+{
+    if (x < 0) x += SCREEN_WIDTH;
+    if (x >= SCREEN_WIDTH) x -= SCREEN_WIDTH;
+    if (y < 0) y += SCREEN_HEIGHT - 3;
+    if (y >= SCREEN_HEIGHT - 3) y -= SCREEN_HEIGHT - 3;
+
+    if (getCharAtPosition(x, y) != c)
+    {
+        gotoxy(x, y);
+        cout << c;
+    }
+}
+
+// Función para ajustar el tamaño de la consola
+void setConsoleSize(int ancho, int alto)
+{
+    COORD bufferSize;
+    bufferSize.X = ancho;
+    bufferSize.Y = alto;
+    SetConsoleScreenBufferSize(hConsole, bufferSize);
+
+    SMALL_RECT windowSize = {0, 0, ancho - 1, alto - 1};
+    SetConsoleWindowInfo(hConsole, TRUE, &windowSize);
+}
+
+// Función para maximizar la consola
+void maximizarConsola()
+{
+    HWND hwnd = GetConsoleWindow();
+    ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+}
+
+// Función para borrar una línea específica
+void clearLine(int y)
+{
+    gotoxy(0, y);
+    cout << string(SCREEN_WIDTH, ' ');
+    gotoxy(0, y);
+}
+
+// Función para mostrar el menú de opciones
+void Menu()
+{
+    int menuX = SCREEN_WIDTH;
+    gotoxy(menuX, 0);
+    cout << "Menu:";
+    gotoxy(menuX, 1);
+    cout << "PRESIONE LA TECLA SEGUN LA OPCION QUE DESEA USAR";
+    gotoxy(menuX, 3);
+    cout << "F1. TRIANGULO";
+    gotoxy(menuX, 5);
+    cout << "F2. CUADRADO";
+    gotoxy(menuX, 7);
+    cout << "F3. RECTANGULO";
+    gotoxy(menuX, 9);
+    cout << "F4. CIRCULO";
+    gotoxy(menuX, 11);
+    cout << "F5. LINEA";
+    gotoxy(menuX, 13);
+    cout << "F6. ROMBO";
+    gotoxy(menuX, 15);
+    cout << "F7. HEXAGONO";
+    gotoxy(menuX, 17);
+    cout << "F8. NUEVO CARACTER";
+    gotoxy(menuX, 19);
+    cout << "F9. LIMPIAR PANTALLA";
+    gotoxy(menuX, 21);
+    cout << "F10. COLOR DE CARACTER";
+    gotoxy(menuX, 23);
+    cout << "F12. GRABAR PANTALLA";
+    gotoxy(menuX, 25);
+    cout << "CTRL+A. ABRIR ARCHIVO";
+    gotoxy(menuX, 27);
+    cout << "ESC. Salir";
+    gotoxy(menuX, 30);
+    cout << "LEYENDA DE COLORES";
+    gotoxy(menuX, 32);
+    cout << "1:AZUL        6:AMARILLO";
+    gotoxy(menuX, 34);
+    cout << "2:VERDE       7:BLANCO";
+    gotoxy(menuX, 36);
+    cout << "3:AGUAMARINA  8:GRIS";
+    gotoxy(menuX, 38);
+    cout << "4:ROJO        9:AZUL CLARO";
+    gotoxy(menuX, 40);
+    cout << "5:PURPURA     0: NEGRO";
+}
+
+// Función para dibujar una línea de delimitación en la pantalla
+void dibujarLineaDelimitacion()
+{
+    for (int i = 0; i < SCREEN_WIDTH; i++)
+    {
+        gotoxy(i, SCREEN_HEIGHT - 4);
+        cout << '-';
+    }
+}
+
+// Función para preguntar si el usuario desea dibujar con relleno
+bool preguntarRelleno()
+{
+    char opcion;
+    int inputY = SCREEN_HEIGHT - 1;
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Desea dibujar con relleno? (s/n): ";
+    cin >> opcion;
+    clearLine(inputY);
+    return (opcion == 's' || opcion == 'S');
+}
+
+// Función para cambiar el color del texto en la consola
+void cambiarColorTexto(WORD color)
+{
+    SetConsoleTextAttribute(hConsole, color);
+}
+
+// Función para mostrar un mensaje en una línea específica
+void mostrarMensaje(const string& mensaje, int y) {
+    clearLine(y);
+    gotoxy(0, y);
+    cout << mensaje;
+}
+
+// Función para preguntar la orientación del triángulo
+char preguntarOrientacion()
+{
+    char opcion;
+    int inputY = SCREEN_HEIGHT - 1;
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Elija la orientacion (A: Arriba, I: Izquierda, D: Derecha, B: abajo): ";
+    cin >> opcion;
+    clearLine(inputY);
+    return toupper(opcion);
+}
+
+// Función para preguntar la orientación del rombo (horizontal o vertical)
+char preguntarOrientacionRombo()
+{
+    char opcion;
+    int inputY = SCREEN_HEIGHT - 1;
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Elija la orientacion del rombo (H: Horizontal, V: Vertical): ";
+    cin >> opcion;
+    clearLine(inputY);
+    return toupper(opcion);
+}
+
+// Función para cambiar el carácter utilizado para dibujar
+void cambiarCaracter(char &cursorc)
+{
+    int inputY = SCREEN_HEIGHT - 2;
+
+    gotoxy(0, inputY);
+    clearLine(inputY);
+    cout << "Ingrese el nuevo caracter para dibujar figuras: ";
+    cin >> cursorc;
+    clearLine(inputY);
+}
+
+// Función para limpiar la pantalla
+void limpiarPantalla()
+{
+    system("cls");
+    SetConsoleTextAttribute(hConsole, 0xF0);
+    Menu();
+    dibujarLineaDelimitacion();
+}
+
+// Función para limpiar el buffer de entrada
+void limpiarBuffer()
+{
+    while (kbhit())
+    {
+        getch();
+    }
+}
+
+// Función para guardar el contenido de la pantalla en un archivo
+void guardarPantalla()
+{
+    CHAR_INFO buffer[SCREEN_WIDTH * SCREEN_HEIGHT];
+    COORD bufferSize = {SCREEN_WIDTH, SCREEN_HEIGHT};
+    COORD bufferCoord = {0, 0};
+    SMALL_RECT readRegion = {0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1};
+
+    if (!ReadConsoleOutput(hConsole, buffer, bufferSize, bufferCoord, &readRegion))
+    {
+        cout << "Error al leer la salida de la consola." << endl;
+        return;
+    }
+
+    // Obtener la ruta del escritorio
+    char desktopPath[MAX_PATH];
+    if (FAILED(SHGetFolderPathA(NULL, CSIDL_DESKTOP, NULL, 0, desktopPath)))
+    {
+        cout << "Error al obtener la ruta del escritorio." << endl;
+        return;
+    }
+    string filePath = string(desktopPath) + "\\pantalla.txt";
+
+    ofstream outFile(filePath.c_str());
+    if (!outFile)
+    {
+        cout << "Error al abrir el archivo para escribir." << endl;
+        return;
+    }
+
+    for (int y = 0; y < SCREEN_HEIGHT; ++y)
+    {
+        for (int x = 0; x < SCREEN_WIDTH; ++x)
+        {
+            outFile << buffer[x + y * SCREEN_WIDTH].Char.AsciiChar;
+        }
+        outFile << endl;
+    }
+
+    outFile.close();
+    cout << "Pantalla guardada en " << filePath << endl;
+}
+
+// Función para abrir un archivo y mostrar su contenido en la consola
+void abrirArchivo()
+{
+    string filePath;
+    int inputY = SCREEN_HEIGHT - 2;
+
+    mostrarMensaje("Ingrese la ruta del archivo a abrir: ", inputY);
+    cin >> filePath;
+    clearLine(inputY);
+
+    ifstream inFile(filePath.c_str());
+    if (!inFile)
+    {
+        mostrarMensaje("Error al abrir el archivo.", inputY);
+        return;
+    }
+
+    string line;
+    int y = 0;
+    while (getline(inFile, line) && y < SCREEN_HEIGHT - 3)
+    {
+        gotoxy(0, y);
+        cout << line.substr(0, SCREEN_WIDTH);
+        y++;
+    }
+
+    inFile.close();
+    mostrarMensaje("Archivo cargado correctamente.", inputY);
+}
+
+// Función para dibujar un triángulo equilátero
+void dibujarTriangulo(int baseX, int baseY, int base, char &cursorc, bool relleno, char orientacion)
+{
+    int altura = (base + 1) / 2;
+
+    // Si el carácter es un espacio, cambiarlo a '*'
+    if (cursorc == ' ') {cursorc = '*';}
+
+    switch (orientacion)
+    {
+    case 'A': // Abajo
+        for (int i = 0; i < altura; ++i)
+        {
+            for (int j = -i; j <= i; ++j)
+            {
+                if (relleno || j == -i || j == i || i == altura - 1)
+                {
+                    int x = baseX + j;
+                    int y = baseY + i;
+                    if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT - 3)
+                    {
+                        writeCharAtPosition(x, y, cursorc);
+                    }
+                }
+            }
+        }
+        break;
+
+    case 'B': // Arriba
+        for (int i = 0; i < altura; ++i)
+        {
+            for (int j = -i; j <= i; ++j)
+            {
+                if (relleno || j == -i || j == i || i == altura - 1)
+                {
+                    int x = baseX + j;
+                    int y = baseY - i;
+                    if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT - 3)
+                    {
+                        writeCharAtPosition(x, y, cursorc);
+                    }
+                }
+            }
+        }
+        break;
+
+    case 'I': // Izquierda
+        for (int i = 0; i < altura; ++i)
+        {
+            for (int j = -i; j <= i; ++j)
+            {
+                if (relleno || j == -i || j == i || i == altura - 1)
+                {
+                    int x = baseX - i;
+                    int y = baseY + j;
+                    if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT - 3)
+                    {
+                        writeCharAtPosition(x, y, cursorc);
+                    }
+                }
+            }
+        }
+        break;
+
+    case 'D': // Derecha
+        for (int i = 0; i < altura; ++i)
+        {
+            for (int j = -i; j <= i; ++j)
+            {
+                if (relleno || j == -i || j == i || i == altura - 1)
+                {
+                    int x = baseX + i;
+                    int y = baseY + j;
+                    if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT - 3)
+                    {
+                        writeCharAtPosition(x, y, cursorc);
+                    }
+                }
+            }
+        }
+        break;
+    }
+    // Restaurar el cursor a la posición inicial
+    gotoxy(baseX, baseY);
+    cout << ' ';
+}
+
+
+// Función para dibujar un cuadrado
+void dibujarCuadrado(int baseX, int baseY, int lado, char &cursorc, bool relleno, char orientacion)
+{
+    int altura = lado;
+
+    switch (orientacion)
+    {
+    case 'A': // Abajo
+        for (int i = 0; i < altura; ++i)
+        {
+            for (int j = 0; j < lado; ++j)
+            {
+                if (relleno || i == 0 || i == altura - 1 || j == 0 || j == lado - 1)
+                {
+                    int x = baseX + j;
+                    int y = baseY + i;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+
+    case 'B': // Arriba
+        for (int i = 0; i < altura; ++i)
+        {
+            for (int j = 0; j < lado; ++j)
+            {
+                if (relleno || i == 0 || i == altura - 1 || j == 0 || j == lado - 1)
+                {
+                    int x = baseX + j;
+                    int y = baseY - i;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+
+    case 'I': // Izquierda
+        for (int i = 0; i < lado; ++i)
+        {
+            for (int j = 0; j < altura; ++j)
+            {
+                if (relleno || i == 0 || i == lado - 1 || j == 0 || j == altura - 1)
+                {
+                    int x = baseX - j;
+                    int y = baseY + i;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+
+    case 'D': // Derecha
+        for (int i = 0; i < lado; ++i)
+        {
+            for (int j = 0; j < altura; ++j)
+            {
+                if (relleno || i == 0 || i == lado - 1 || j == 0 || j == altura - 1)
+                {
+                    int x = baseX + j;
+                    int y = baseY + i;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+    }
+    // Restaurar el cursor a la posición inicial
+    gotoxy(baseX, baseY);
+    cout << ' ';
+    cursorc = ' ';
+}
+
+// Función para dibujar un rectángulo
+void dibujarRectangulo(int baseX, int baseY, int ancho, int alto, char &cursorc, bool relleno, char orientacion)
+{
+    switch (orientacion)
+    {
+    case 'A': // Abajo
+        for (int i = 0; i < alto; ++i)
+        {
+            for (int j = 0; j < ancho; ++j)
+            {
+                if (relleno || i == 0 || i == alto - 1 || j == 0 || j == ancho - 1)
+                {
+                    int x = baseX + j;
+                    int y = baseY + i;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+
+    case 'B': // Arriba
+        for (int i = 0; i < alto; ++i)
+        {
+            for (int j = 0; j < ancho; ++j)
+            {
+                if (relleno || i == 0 || i == alto - 1 || j == 0 || j == ancho - 1)
+                {
+                    int x = baseX + j;
+                    int y = baseY - i;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+
+    case 'I': // Izquierda
+        for (int i = 0; i < ancho; ++i)
+        {
+            for (int j = 0; j < alto; ++j)
+            {
+                if (relleno || i == 0 || i == ancho - 1 || j == 0 || j == alto - 1)
+                {
+                    int x = baseX - j;
+                    int y = baseY + i;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+
+    case 'D': // Derecha
+        for (int i = 0; i < ancho; ++i)
+        {
+            for (int j = 0; j < alto; ++j)
+            {
+                if (relleno || i == 0 || i == ancho - 1 || j == 0 || j == alto - 1)
+                {
+                    int x = baseX + j;
+                    int y = baseY + i;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+    }
+    // Restaurar el cursor a la posición inicial
+    gotoxy(baseX, baseY);
+    cout << ' ';
+    cursorc = ' ';
+}
+
+// Función para dibujar un círculo
+void dibujarCirculo(int baseX, int baseY, int radio, char &cursorc, bool relleno)
+{
+    for (int y = -radio; y <= radio; y++)
+    {
+        for (int x = -radio; x <= radio; x++)
+        {
+            if (relleno)
+            {
+                if (x * x + y * y <= radio * radio)
+                {
+                    int drawX = baseX + x;
+                    int drawY = baseY + y;
+                    if (drawX >= 0 && drawX < SCREEN_WIDTH && drawY >= 0 && drawY < SCREEN_HEIGHT - 3)
+                    {
+                        writeCharAtPosition(drawX, drawY, cursorc);
+                    }
+                }
+            }
+            else
+            {
+                if (abs(x * x + y * y - radio * radio) < radio)
+                {
+                    int drawX = baseX + x;
+                    int drawY = baseY + y;
+                    if (drawX >= 0 && drawX < SCREEN_WIDTH && drawY >= 0 && drawY < SCREEN_HEIGHT - 3)
+                    {
+                        writeCharAtPosition(drawX, drawY, cursorc);
+                    }
+                }
+            }
+        }
+    }
+    // Restaurar el cursor a la posición inicial
+    gotoxy(baseX, baseY);
+    cout << ' ';
+}
+//funcion para dibujar hexagono
+void dibujarHexagono(int baseX, int baseY, int lado, char &cursorc, bool relleno) {
+    int altura = lado * sqrt(3) / 2;  // Altura del hexágono
+
+    // Dibuja el hexágono parte por parte
+    for (int i = 0; i <= lado; ++i) {
+        for (int j = -i; j <= i; ++j) {
+            int x = baseX + j;
+            int y = baseY - i;
+            if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT - 3) {
+                if (relleno || j == -i || j == i) {
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < lado; ++i) {
+        for (int j = -lado; j <= lado; ++j) {
+            int x = baseX + j;
+            int y = baseY - lado + i;
+            if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT - 3) {
+                if (relleno || j == -lado || j == lado) {
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i <= lado; ++i) {
+        for (int j = -lado + i; j <= lado - i; ++j) {
+            int x = baseX + j;
+            int y = baseY + i;
+            if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT - 3) {
+                if (relleno || j == -lado + i || j == lado - i) {
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+    }
+    // Restaurar el cursor a la posición inicial
+    gotoxy(baseX, baseY);
+    std::cout << ' ';
+    cursorc = ' ';
+}
+
+
+// Función para dibujar una línea
+void dibujarLinea(int baseX, int baseY, int longitud, char &cursorc, char orientacion, bool diagonal)
+{
+    switch (orientacion)
+    {
+    case 'A': // Abajo
+        for (int i = 0; i < longitud; ++i)
+        {
+            int x = baseX;
+            int y = baseY + i;
+            if (diagonal)
+                x += i;
+            writeCharAtPosition(x, y, cursorc);
+        }
+        break;
+
+    case 'B': // Arriba
+        for (int i = 0; i < longitud; ++i)
+        {
+            int x = baseX;
+            int y = baseY - i;
+            if (diagonal)
+                x += i;
+            writeCharAtPosition(x, y, cursorc);
+        }
+        break;
+
+    case 'I': // Izquierda
+        for (int i = 0; i < longitud; ++i)
+        {
+            int x = baseX - i;
+            int y = baseY;
+            if (diagonal)
+                y += i;
+            writeCharAtPosition(x, y, cursorc);
+        }
+        break;
+
+    case 'D': // Derecha
+        for (int i = 0; i < longitud; ++i)
+        {
+            int x = baseX + i;
+            int y = baseY;
+            if (diagonal)
+                y += i;
+            writeCharAtPosition(x, y, cursorc);
+        }
+        break;
+    }
+    // Restaurar el cursor a la posición inicial
+    gotoxy(baseX, baseY);
+    cout << ' ';
+    cursorc = ' ';
+}
+
+// Función para dibujar un rombo
+void dibujarRombo(int baseX, int baseY, int lado, char &cursorc, bool relleno, char orientacion)
+{
+    int altura = lado / 2;
+
+    switch (orientacion)
+    {
+    case 'V': // Vertical
+        for (int i = 0; i <= altura; ++i)
+        {
+            for (int j = -i; j <= i; ++j)
+            {
+                if (relleno || j == -i || j == i)
+                {
+                    int x = baseX + j;
+                    int y = baseY + i;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        for (int i = altura - 1; i >= 0; --i)
+        {
+            for (int j = -i; j <= i; ++j)
+            {
+                if (relleno || j == -i || j == i)
+                {
+                    int x = baseX + j;
+                    int y = baseY + altura + (altura - i);
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+    case 'H': // Horizontal
+        for (int i = 0; i <= altura; ++i)
+        {
+            for (int j = -i; j <= i; ++j)
+            {
+                if (relleno || j == -i || j == i)
+                {
+                    int x = baseX + i;
+                    int y = baseY + j;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        for (int i = altura - 1; i >= 0; --i)
+        {
+            for (int j = -i; j <= i; ++j)
+            {
+                if (relleno || j == -i || j == i)
+                {
+                    int x = baseX + altura + (altura - i);
+                    int y = baseY + j;
+                    writeCharAtPosition(x, y, cursorc);
+                }
+            }
+        }
+        break;
+    }
+    // Restaurar el cursor a la posición inicial
+    gotoxy(baseX, baseY);
+    cout << ' ';
+    cursorc = ' ';
+}
+
+int main()
+{
+    maximizarConsola();
+
+    int x = 0, y = 0;
+    int prevX = x, prevY = y;
+    char cursorc = '*';
+    char lastChar = ' ';  // Carácter anterior en la posición del cursor
+
+    setConsoleSize(SCREEN_WIDTH + MENU_WIDTH, SCREEN_HEIGHT);
+    system("cls");
+    system("color F0");
+    Menu();
+    dibujarLineaDelimitacion();
+    gotoxy(x, y);
+    cout << cursorc;
+
+    WORD colorActual = 0xF0;
+
+    while (true)
+    {
+        // Mover cursor a la izquierda
+        if (GetAsyncKeyState(VK_LEFT) & 0x8000)
+        {
+            gotoxy(prevX, prevY);
+            cout << lastChar;  // Restaurar el carácter original
+            prevX = x;
+            prevY = y;
+
+            x--;
+            if (x < 0) x = SCREEN_WIDTH - 1;
+
+            lastChar = getCharAtPosition(x, y);
+            gotoxy(x, y);
+            cout << cursorc;
+        }
+        // Mover cursor a la derecha
+        if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
+        {
+            gotoxy(prevX, prevY);
+            cout << lastChar;  // Restaurar el carácter original
+            prevX = x;
+            prevY = y;
+
+            x++;
+            if (x >= SCREEN_WIDTH) x = 0;
+
+            lastChar = getCharAtPosition(x, y);
+            gotoxy(x, y);
+            cout << cursorc;
+        }
+        // Mover cursor hacia abajo
+        if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+        {
+            gotoxy(prevX, prevY);
+            cout << lastChar;  // Restaurar el carácter original
+            prevX = x;
+            prevY = y;
+
+            y++;
+            if (y >= SCREEN_HEIGHT - 4) y = 0;
+
+            lastChar = getCharAtPosition(x, y);
+            gotoxy(x, y);
+            cout << cursorc;
+        }
+        // Mover cursor hacia arriba
+        if (GetAsyncKeyState(VK_UP) & 0x8000)
+        {
+            gotoxy(prevX, prevY);
+            cout << lastChar;  // Restaurar el carácter original
+            prevX = x;
+            prevY = y;
+
+            y--;
+            if (y < 0) y = SCREEN_HEIGHT - 5;
+
+            lastChar = getCharAtPosition(x, y);
+            gotoxy(x, y);
+            cout << cursorc;
+        }
+
+        // Dibujo de figuras según la tecla presionada
+        if (GetAsyncKeyState(VK_F1) & 0x8000)
+        {
+            cambiarColorTexto(colorActual);
+            bool relleno = preguntarRelleno();
+            char orientacion = preguntarOrientacion();
+            int base;
+            mostrarMensaje("Ingrese la base del triangulo (impar): ", SCREEN_HEIGHT - 1);
+            cin >> base;
+            clearLine(SCREEN_HEIGHT - 1);
+
+            // Actualizar lastChar antes de dibujar
+            lastChar = getCharAtPosition(x, y);
+
+            dibujarTriangulo(x, y, base, cursorc, relleno, orientacion);
+            // Restaurar el cursor a la posición inicial
+            gotoxy(prevX, prevY);
+            cout << ' ';
+            cursorc = '*';  // Cambiar el cursor de nuevo a '*'
+            limpiarBuffer();
+            Sleep(200);
+        }
+        if (GetAsyncKeyState(VK_F2) & 0x8000)
+        {
+            cambiarColorTexto(colorActual);
+            bool relleno = preguntarRelleno();
+            char orientacion = preguntarOrientacion();
+            int lado;
+            mostrarMensaje("Ingrese el lado del cuadrado: ", SCREEN_HEIGHT - 1);
+            cin >> lado;
+            clearLine(SCREEN_HEIGHT - 1);
+
+            // Actualizar lastChar antes de dibujar
+            lastChar = getCharAtPosition(x, y);
+
+            dibujarCuadrado(x, y, lado, cursorc, relleno, orientacion);
+            // Restaurar el cursor a la posición inicial
+            gotoxy(prevX, prevY);
+            cout << ' ';
+            cursorc = '*';  // Cambiar el cursor de nuevo a '*'
+            limpiarBuffer();
+            Sleep(200);
+        }
+        if (GetAsyncKeyState(VK_F3) & 0x8000)
+        {
+            cambiarColorTexto(colorActual);
+            bool relleno = preguntarRelleno();
+            char orientacion = preguntarOrientacion();
+            int ancho, alto;
+            mostrarMensaje("Ingrese el ancho del rectangulo: ", SCREEN_HEIGHT - 1);
+            cin >> ancho;
+            clearLine(SCREEN_HEIGHT - 1);
+            mostrarMensaje("Ingrese el alto del rectangulo: ", SCREEN_HEIGHT - 1);
+            cin >> alto;
+            clearLine(SCREEN_HEIGHT - 1);
+
+            // Actualizar lastChar antes de dibujar
+            lastChar = getCharAtPosition(x, y);
+
+            dibujarRectangulo(x, y, ancho, alto, cursorc, relleno, orientacion);
+            // Restaurar el cursor a la posición inicial
+            gotoxy(prevX, prevY);
+            cout << ' ';
+            cursorc = '*';  // Cambiar el cursor de nuevo a '*'
+            limpiarBuffer();
+            Sleep(200);
+        }
+        if (GetAsyncKeyState(VK_F4) & 0x8000)
+        {
+            cambiarColorTexto(colorActual);
+            bool relleno = preguntarRelleno();
+            int radio;
+            mostrarMensaje("Ingrese el radio del circulo: ", SCREEN_HEIGHT - 1);
+            cin >> radio;
+            clearLine(SCREEN_HEIGHT - 1);
+
+            // Actualizar lastChar antes de dibujar
+            lastChar = getCharAtPosition(x, y);
+
+            dibujarCirculo(x, y, radio, cursorc, relleno);
+            // Restaurar el cursor a la posición inicial
+            gotoxy(prevX, prevY);
+            cout << ' ';
+            cursorc = '*';  // Cambiar el cursor de nuevo a '*'
+            limpiarBuffer();
+            Sleep(200);
+        }
+        if (GetAsyncKeyState(VK_F5) & 0x8000)
+        {
+            cambiarColorTexto(colorActual);
+            char orientacion;
+            mostrarMensaje("Elija la orientacion (A: Abajo, D: Derecha, I: Izquierda, B: Arriba): ", SCREEN_HEIGHT - 1);
+            cin >> orientacion;
+            clearLine(SCREEN_HEIGHT - 1);
+            mostrarMensaje("Desea que la linea sea diagonal? (s/n): ", SCREEN_HEIGHT - 1);
+            char diagonal;
+            cin >> diagonal;
+            clearLine(SCREEN_HEIGHT - 1);
+            int longitud;
+            mostrarMensaje("Ingrese la longitud de la linea: ", SCREEN_HEIGHT - 1);
+            cin >> longitud;
+            clearLine(SCREEN_HEIGHT - 1);
+
+            // Actualizar lastChar antes de dibujar
+            lastChar = getCharAtPosition(x, y);
+
+            dibujarLinea(x, y, longitud, cursorc, orientacion, (diagonal == 's' || diagonal == 'S'));
+            // Restaurar el cursor a la posición inicial
+            gotoxy(prevX, prevY);
+            cout << ' ';
+            cursorc = '*';  // Cambiar el cursor de nuevo a '*'
+            limpiarBuffer();
+            Sleep(200);
+        }
+        if (GetAsyncKeyState(VK_F6) & 0x8000)
+        {
+            cambiarColorTexto(colorActual);
+            bool relleno = preguntarRelleno();
+            char orientacion = preguntarOrientacionRombo();
+            int lado;
+            mostrarMensaje("Ingrese el lado del rombo: ", SCREEN_HEIGHT - 1);
+            cin >> lado;
+            clearLine(SCREEN_HEIGHT - 1);
+
+            // Actualizar lastChar antes de dibujar
+            lastChar = getCharAtPosition(x, y);
+
+            dibujarRombo(x, y, lado, cursorc, relleno, orientacion);
+            // Restaurar el cursor a la posición inicial
+            gotoxy(prevX, prevY);
+            cout << ' ';
+            cursorc = '*';  // Cambiar el cursor de nuevo a '*'
+            limpiarBuffer();
+            Sleep(200);
+        }
+       if (GetAsyncKeyState(VK_F7) & 0x8000)
+{
+    cambiarColorTexto(colorActual);
+    bool relleno = preguntarRelleno();
+    int lado;
+    mostrarMensaje("Ingrese el lado del hexagono: ", SCREEN_HEIGHT - 1);
+    cin >> lado;
+    clearLine(SCREEN_HEIGHT - 1);
+
+    // Actualizar lastChar antes de dibujar
+    lastChar = getCharAtPosition(x, y);
+
+    dibujarHexagono(x, y, lado, cursorc, relleno);
+    // Restaurar el cursor a la posición inicial
+    gotoxy(prevX, prevY);
+    cout << ' ';
+    cursorc = '*';  // Cambiar el cursor de nuevo a '*'
+    limpiarBuffer();
+    Sleep(200);
+}
+
+        if (GetAsyncKeyState(VK_F8) & 0x8000)
+        {
+            cambiarColorTexto(colorActual);
+            cambiarCaracter(cursorc);
+            // Actualizar lastChar con el nuevo cursorc
+            lastChar = cursorc;
+            limpiarBuffer();
+            Sleep(200);
+        }
+        if (GetAsyncKeyState(VK_F9) & 0x8000) limpiarPantalla();
+        if (GetAsyncKeyState(VK_F10) & 0x8000)
+        {
+            char color;
+            int inputY = SCREEN_HEIGHT - 2;
+
+            gotoxy(0, inputY);
+            clearLine(inputY);
+            cout << "Ingrese el codigo del color del texto (0-9): ";
+            cin >> color;
+            clearLine(inputY);
+
+            colorActual = 0xF0 | (isdigit(color) ? color - '0' : toupper(color) - 'A' + 10);
+            limpiarBuffer();
+        }
+        if (GetAsyncKeyState(VK_F12) & 0x8000) {guardarPantalla(); limpiarBuffer(); Sleep(200);}
+        if (GetAsyncKeyState(VK_CONTROL) & 0x8000 && GetAsyncKeyState('A') & 0x8000) {abrirArchivo(); limpiarBuffer(); Sleep(200);}
+        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) break;
+
+        Sleep(100);
+    }
+    return 0;
+}
+
